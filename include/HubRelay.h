@@ -18,6 +18,9 @@
 #include <freertos/task.h>
 #include "PacketTypes.h"
 
+// Forward declaration for device tracking
+class HubStatus;
+
 /// Maximum ESP-NOW packet size
 static constexpr size_t MAX_PACKET_SIZE = 250;
 
@@ -77,6 +80,9 @@ public:
     /// Timestamp (millis) of the last relayed packet
     uint32_t lastRelayTimeMs() const { return _lastRelayMs; }
 
+    /// Set the status tracker for device activity notifications
+    void setStatusTracker(HubStatus* tracker) { _statusTracker = tracker; }
+
 private:
     // ─── ESP-NOW callback (static, forwards to singleton) ───
     static void onDataReceived(const uint8_t *mac, const uint8_t *data, int len);
@@ -96,6 +102,7 @@ private:
     uint32_t        _relayDelayUs   = 3000;
     RelayStats      _stats;
     AnemoTracker    _anemoTracker;
+    HubStatus*      _statusTracker  = nullptr;
     volatile uint32_t _lastRelayMs  = 0;
 };
 

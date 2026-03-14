@@ -6,6 +6,7 @@
  */
 
 #include "HubRelay.h"
+#include "HubStatus.h"
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <esp_timer.h>
@@ -160,6 +161,7 @@ void HubRelay::classifyAndRelay(RelayQueueItem& item) {
             gps->ttl--;
             shouldRelay = true;
             _stats.relayedGPS++;
+            if (_statusTracker) _statusTracker->notifyBoatSeen(gps->name);
         } else {
             _stats.droppedTTL++;
         }
@@ -182,9 +184,10 @@ void HubRelay::classifyAndRelay(RelayQueueItem& item) {
     else if (item.length == sizeof(AckWithStatePacket)) {
         auto *ack = reinterpret_cast<AckWithStatePacket*>(item.data);
         if (ack->ttl > 0) {
-            ack->ttl--;
+            ack->ttl--;  
             shouldRelay = true;
             _stats.relayedStates++;
+            if (_statusTracker) _statusTracker->notifyBuoySeen(ack->buoyId);
         } else {
             _stats.droppedTTL++;
         }
@@ -195,6 +198,7 @@ void HubRelay::classifyAndRelay(RelayQueueItem& item) {
             state->ttl--;
             shouldRelay = true;
             _stats.relayedStates++;
+            if (_statusTracker) _statusTracker->notifyBuoySeen(state->buoyId);
         } else {
             _stats.droppedTTL++;
         }
@@ -227,6 +231,7 @@ bool HubRelay::handleAnemometerRelay(RelayQueueItem& item) {
         if (anemo->ttl > 0) {
             anemo->ttl--;
             _stats.relayedAnemometer++;
+            if (_statusTracker) _statusTracker->notifyAnemometerSeen();
             return true;
         }
         _stats.droppedTTL++;
@@ -248,6 +253,7 @@ bool HubRelay::handleAnemometerRelay(RelayQueueItem& item) {
         _anemoTracker.active = true;
 
         _stats.relayedAnemometer++;
+        if (_statusTracker) _statusTracker->notifyAnemometerSeen();
         return true;    // Relay as-is (no TTL to decrement)
     }
 

@@ -64,6 +64,7 @@ void setup() {
     // ─── Initialize status broadcaster ───
     Serial.println("→ Initializing status broadcaster...");
     hubStatus.begin(&hubRelay, HUB_STATUS_INTERVAL_MS);
+    hubRelay.setStatusTracker(&hubStatus);
 
     Serial.println();
     Serial.println("════════════════════════════════════════════");
