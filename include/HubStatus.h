@@ -70,7 +70,7 @@ private:
     uint32_t    _lastBroadcast  = 0;
 
     // Device tracking
-    static constexpr uint8_t MAX_BUOYS = 6;
+    static constexpr uint8_t MAX_BUOYS = 8;
     static constexpr uint8_t MAX_BOATS = 8;
 
     uint32_t _buoyLastSeen[MAX_BUOYS]   = {};
