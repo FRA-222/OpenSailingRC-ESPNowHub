@@ -25,6 +25,10 @@ bool HubRelay::begin(uint32_t relayDelayUs, uint8_t queueSize) {
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
+    // Enable ESP-NOW Long Range mode only
+    esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR);
+    Serial.println("  ✓ ESP-NOW Long Range ONLY mode");
+
     // Set channel 1 (must match all other OpenSailingRC devices)
     esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
 
