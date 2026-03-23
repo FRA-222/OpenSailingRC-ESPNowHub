@@ -150,9 +150,26 @@ void HubRelay::relayTaskLoop() {
 
 void HubRelay::classifyAndRelay(RelayQueueItem& item) {
     bool shouldRelay = false;
+
+    // FIX: Vérifier la taille BuoyState EN PREMIER, avant d'interpréter le
+    // premier byte comme messageType. Les bouées n'ont pas de champ messageType :
+    // leur premier byte est buoyId (0-7). Sans ce check, buoyId=2 entre dans
+    // le handler anémomètre et le paquet est silencieusement ignoré.
+    if (item.length == sizeof(BuoyState)) {
+        auto *state = reinterpret_cast<BuoyState*>(item.data);
+        if (state->ttl > 0) {
+            state->ttl--;
+            shouldRelay = true;
+            _stats.relayedStates++;
+            if (_statusTracker) _statusTracker->notifyBuoySeen(state->buoyId);
+        } else {
+            _stats.droppedTTL++;
+        }
+    }
+    // ─── Packets with messageType as first byte ───
+    else {
     uint8_t messageType = item.data[0];
 
-    // ─── Packets with messageType as first byte ───
     if (messageType == MSG_TYPE_HUB_STATUS) {
         // Never relay other Hubs' status packets
         return;
@@ -196,17 +213,7 @@ void HubRelay::classifyAndRelay(RelayQueueItem& item) {
             _stats.droppedTTL++;
         }
     }
-    else if (item.length == sizeof(BuoyState)) {
-        auto *state = reinterpret_cast<BuoyState*>(item.data);
-        if (state->ttl > 0) {
-            state->ttl--;
-            shouldRelay = true;
-            _stats.relayedStates++;
-            if (_statusTracker) _statusTracker->notifyBuoySeen(state->buoyId);
-        } else {
-            _stats.droppedTTL++;
-        }
-    }
+    } // Fin else (non-BuoyState)
     // Unknown packet — ignore (don't relay unknown formats)
 
     if (shouldRelay) {
